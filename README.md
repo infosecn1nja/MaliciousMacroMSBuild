@@ -33,7 +33,7 @@ Version 2.0
 | $$ \/  | $$|  $$$$$$/|  $$$$$$/
 |__/     |__/ \______/  \______/ 
 
-Malicious Macro MSBuild Generator v2.0
+Malicious Macro MSBuild Generator v2.1
 Author : Rahmat Nurfauzi (@infosecn1nja)
    
 usage: m3-gen.py [-h] -i INPUTFILE -p PAYLOAD -o OUTPUT [-a] [-d DOMAIN]
