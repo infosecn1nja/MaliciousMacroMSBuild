@@ -1,21 +1,26 @@
-# Malicious Macro MSBuild Generator 2.0
+# Malicious Macro MSBuild Generator v2.1
 
 ## Description
-Generates Malicious Macro and Execute Powershell or Shellcode via MSBuild Application Whitelisting Bypass.
+Generates Malicious Macro and Execute Powershell or Shellcode via MSBuild Application Whitelisting Bypass, this tool intended for adversary simulation and red teaming purpose.
 
-## What is MSBuild
-
-MSBuild.exe (Microsoft Build Engine) is a software build platform used by Visual Studio. It takes XML formatted project files that define requirements for building various platforms and configurations.  
-
-Adversaries can use MSBuild to proxy execution of code through a trusted Windows utility. The inline task capability of MSBuild that was introduced in .NET version 4 allows for C# code to be inserted into the XML project file.  
-
-MSBuild will compile and execute the inline task. MSBuild.exe is a signed Microsoft binary, so when it is used this way it can execute arbitrary code and bypass application whitelisting defenses that are configured to allow MSBuild.exe execution.
+## Disclaimer
+> MaliciousMacroMSBuild should be used for authorized red teaming and/or nonprofit educational purposes only. Any misuse of this software will not be the responsibility of the author or of any other collaborator. Use it at your own networks and/or with the network owner's permission.
 
 ## Changelog
-* Added Option Macro AMSI Bypass (Thanks to outflank team)
-* Added PPID Spoofing {9BA05972-F6A8-11CF-A442-00A0C90A8F39}
-* Added functionality auto removed csproj payload after execution
-* Added custom msbuild option
+```
+Version 2.1
+-----------
++ Added sandbox evasion technique using environmental keying domain checking
++ Added Kill Date format dd/mm/yyyy [28/02/2018]
++ Move payload from public user to current user download folder
+
+Version 2.0
+-----------
++ Added Option Macro AMSI Bypass (Thanks to outflank team)
++ Added PPID Spoofing {9BA05972-F6A8-11CF-A442-00A0C90A8F39}
++ Added functionality auto removed csproj payload after execution
++ Added custom msbuild option
+```
 
 ## Usage
 ```
@@ -31,32 +36,49 @@ MSBuild will compile and execute the inline task. MSBuild.exe is a signed Micros
 Malicious Macro MSBuild Generator v2.0
 Author : Rahmat Nurfauzi (@infosecn1nja)
    
-usage: m3-gen.py [-h] -i INPUTFILE -p PAYLOAD -o OUTPUT [-a]
+usage: m3-gen.py [-h] -i INPUTFILE -p PAYLOAD -o OUTPUT [-a] [-d DOMAIN]
+                 [-k KILL_DATE]
 
 optional arguments:
   -h, --help            show this help message and exit
   -i INPUTFILE, --inputfile INPUTFILE
                         Input file you want to embed into the macro
   -p PAYLOAD, --payload PAYLOAD
-                        Choose a payload for powershell or raw shellcode
+                        Choose a payload for powershell, raw shellcode or custom
   -o OUTPUT, --output OUTPUT
                         Output filename for the macro
   -a, --amsi_bypass     Macro AMSI Bypass Execute via ms office trusted location
+  -d DOMAIN, --domain DOMAIN
+                         Sandbox evasion technique using environmental keying domain checking. Use comma separating to set multiple domains
+  -k KILL_DATE, --kill_date KILL_DATE
+                        Set kill date format dd/MM/yyyy the payload do not run on or after this day
 ```
 
-## Example
-* Choose a payload you want to test like shellcode or powershell
-* Generate a raw shellcode in whatever framework you want (Cobalt Strike, Metasploit Framework)
+## Examples
+* Choose a payload you want to test like shellcode or powershell, the shellcode support  stageless and staged payload
+* Generate a raw shellcode in whatever framework you want (Cobalt Strike, Empire, PoshC2)
 
-`$ msfvenom -p windows/exec cmd="calc.exe" -f raw > payload.bin`  
-`$ python M3G.py -p shellcode -i /path/payload.bin -o macro.vba`  
-`$ python M3G.py -p powershell -i /path/payload.ps1 -o macro.vba`
+### Creation of a Shellcode MSBuild VBA Macro 
+`python m3-gen.py -p shellcode -i /path/beacon.bin -o output.vba`
+
+### Creation of a PowerShell MSBuild VBA Macro 
+`python m3-gen.py -p powershell -i /path/payload.ps1 -o output.vba`
+
+### Creation of a Custom MSBuild VBA Macro 
+`python m3-gen.py -p custom -i /path/msbuild.xml -o output.vba`
+
+### Creation of a Shellcode MSBuild VBA Macro With Kill Date
+`python m3-gen.py -p shellcode -i /path/beacon.bin -o output.vba -k 20/03/2018`
+
+### Creation of a Shellcode MSBuild VBA Macro With Environmental Keying
+* `python m3-gen.py -p shellcode -i /path/beacon.bin -o output.vba -d yourdomain`
+* `python m3-gen.py -p shellcode -i /path/beacon.bin -o output.vba -d yourdomain, microsoft, github`
 
 ## Links
-
-* https://gist.github.com/subTee/6b236083da2fd6ddff216e434f257614
-* http://subt0x10.blogspot.no/2017/04/bypassing-application-whitelisting.html
+* https://lolbas-project.github.io/lolbas/Binaries/Msbuild/
+* https://attack.mitre.org/techniques/T1127/
 * https://msdn.microsoft.com/en-us/library/dd722601.aspx
 
-## Credit
-Rahmat Nurfauzi (@infosecn1nja)
+## Author and Credits
+Author : Rahmat Nurfauzi - [@infosecn1nja](https://twitter.com/infosecn1nja)  
+Credits : [@subTee](https://twitter.com/subtee) - For discovering msbuild technique

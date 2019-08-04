@@ -26,7 +26,6 @@
         public override bool Execute()
         {
             Program.Main();
-            
             return true;
         }
       }
